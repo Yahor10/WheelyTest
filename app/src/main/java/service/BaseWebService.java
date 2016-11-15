@@ -6,7 +6,9 @@ import android.content.Intent;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v7.app.NotificationCompat;
+import android.text.TextUtils;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.neovisionaries.ws.client.WebSocket;
 import com.neovisionaries.ws.client.WebSocketAdapter;
@@ -21,7 +23,9 @@ import java.util.Map;
 
 import app.Constants;
 import app.WheelyApp;
+import preferences.PreferenceUtils;
 import ru.wheely.wheelytest.BaseActivity;
+import ru.wheely.wheelytest.MapsActivity;
 import ru.wheely.wheelytest.R;
 
 /**
@@ -38,7 +42,7 @@ public abstract class BaseWebService extends Service {
 
     protected String userName,userPass;
 
-    private final WebSocketAdapter webSocketAdapter = new WebSocketAdapter(){
+    protected final WebSocketAdapter webSocketAdapter = new WebSocketAdapter(){
 
         @Override
         public void onStateChanged(WebSocket websocket, WebSocketState newState) throws Exception {
@@ -54,6 +58,19 @@ public abstract class BaseWebService extends Service {
         }
 
         @Override
+        public void onTextFrame(WebSocket websocket, WebSocketFrame frame) throws Exception {
+            Log.i(Constants.LOG_WEBSOCKET,"on onTextFrame");
+
+            super.onTextFrame(websocket, frame);
+        }
+
+        @Override
+        public void onTextMessage(WebSocket websocket, String text) throws Exception {
+            super.onTextMessage(websocket, text);
+            Log.i(Constants.LOG_WEBSOCKET,"on onTextMessage");
+        }
+
+        @Override
         public void onDisconnected(WebSocket websocket, WebSocketFrame serverCloseFrame, WebSocketFrame clientCloseFrame, boolean closedByServer) throws Exception {
             super.onDisconnected(websocket, serverCloseFrame, clientCloseFrame, closedByServer);
             Log.e(Constants.LOG_WEBSOCKET,"on onDisconnected");
@@ -63,7 +80,23 @@ public abstract class BaseWebService extends Service {
             Intent intent = new Intent();
             intent.setAction(BaseActivity.ACTION_ERROR);
             intent.putExtra(BaseActivity.EXTRA_ERROR_MESSAGE,localizedMessage);
-            handleAction(intent);
+
+
+            String userName = PreferenceUtils.getUserName(BaseWebService.this);
+            String userPass = PreferenceUtils.getUserPass(BaseWebService.this);
+
+            WebSocket webSocket = WheelyApp.getWebSocket();
+            if(webSocket != null && !TextUtils.isEmpty(userName))
+            {
+                Toast.makeText(BaseWebService.this,"Trying to recconect",Toast.LENGTH_SHORT).show();
+                WheelyApp.getWebSocket().removeListener(this);
+                WheelyApp.getWebSocket().disconnect();
+                WheelyApp.connectAsync(this,userName,userPass);
+            }else if(webSocket == null && !TextUtils.isEmpty(userName)){
+                WheelyApp.connectAsync(this,userName,userPass);
+            }else{
+                handleAction(intent);
+            }
         }
 
         @Override
@@ -160,26 +193,20 @@ public abstract class BaseWebService extends Service {
 //             }
 //         }).start(); ;
 
+
         if (hasErr) {
-            Intent i = new Intent();
-            i.setAction(BaseActivity.ACTION_ERROR);
-            i.putExtra(BaseActivity.EXTRA_ERROR_MESSAGE, "cannot connect to server");
-            i.putExtra(BaseActivity.EXTRA_ERROR_CODE, 1);
-            sendError(i);
+            sendError("cannot connect to server");
+            stopSelf();
             return (START_NOT_STICKY);
         } else{
+            if(foreground)
+                startForeground(1, MapsActivity.buildIntent(this));
             return (START_STICKY);
         }
     }
 
 
-    private void sendError(Intent i) {
-        // TODO check if app is available
-        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(i);
-    }
-
-    private void startForeground(int notificationId,Intent i){
+    protected void startForeground(int notificationId,Intent i){
         PendingIntent pintent = PendingIntent.getActivity(this,0,i,0);
 
         NotificationCompat.Builder builder = new NotificationCompat
@@ -198,4 +225,13 @@ public abstract class BaseWebService extends Service {
 
     protected abstract void handleAction(Intent i);
 
+    protected void sendError(String message){
+        // TODO check activities
+        Intent i = new Intent();
+        i.setAction(BaseActivity.ACTION_ERROR);
+        i.putExtra(BaseActivity.EXTRA_ERROR_MESSAGE, message);
+        i.putExtra(BaseActivity.EXTRA_ERROR_CODE, 1);
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(i);
+    }
 }

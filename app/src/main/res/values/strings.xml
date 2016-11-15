@@ -19,4 +19,9 @@
     <string name="title_activity_maps">Map</string>
 
     <string name="error_unexpected">Unexpected error occurs in application</string>
+    <string name="error_login_creds">Can not to login.Please verify your credentinals</string>
+    <string name="error_server_connect">Can not connect to server.Connection Closed"</string>
+    <string name="permission_title_rationale">Permission needed</string>
+    <string name="permission_location">Permission location.</string>
+
 </resources>

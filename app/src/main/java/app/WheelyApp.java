@@ -62,9 +62,7 @@ public class WheelyApp extends Application {
 
 
     public static WebSocket getWebSocket() {
-        if(webSocket == null){
-            throw new IllegalArgumentException("socket is null");
-        }
+
         return webSocket;
     }
 
@@ -82,9 +80,7 @@ public class WheelyApp extends Application {
 
     public static Future<WebSocket> reconnectAsync() throws IOException, WebSocketException
     {
-        Log.v(Constants.LOG_TAG,"reconnect!");
         webSocket.disconnect();
-
         return webSocket.connect(es);
     }
 
@@ -111,6 +107,9 @@ public class WheelyApp extends Application {
     }
 
 
+    public static void setTextMessage(String message){
+        //if(getWebSocket() != null &&)
+    }
     public  static void checkWebsocketState() throws IOException, WebSocketException {
         WebSocketState state = webSocket.getState();
         switch (state)

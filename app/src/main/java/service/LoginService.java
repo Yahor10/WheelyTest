@@ -37,7 +37,6 @@ public class LoginService extends BaseWebService
     protected void handleAction(Intent i) {
         String action = i.getAction();
         Intent intent;
-        Log.v(Constants.LOG_TAG,"Handle login service action" + action);
         if(action.equals(ACTION_ATTEMPT_LOGIN))
         {
             WebSocketState serializableExtra = (WebSocketState) i.getSerializableExtra(EXTRA_WEBSOCKET_STATE);
@@ -55,6 +54,7 @@ public class LoginService extends BaseWebService
                     intent.setAction(LoginActivity.ACTION_LOGIN_SUCCESS);
                     startActivity(intent);
 
+                    stopSelf();
                     break;
                 case CLOSED:
                 {
