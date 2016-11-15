@@ -29,6 +29,7 @@ import app.Constants;
 import app.WheelyApp;
 import data.LatLonEntity;
 import preferences.PreferenceUtils;
+import ru.wheely.wheelytest.MapsActivity;
 import ru.wheely.wheelytest.R;
 
 public class MapService extends BaseWebService implements GoogleApiClient.ConnectionCallbacks,
@@ -40,7 +41,7 @@ public class MapService extends BaseWebService implements GoogleApiClient.Connec
     private GoogleApiClient mGoogleApiClient;
     Location mLastLocation;
     private LocationRequest mLocationRequest;
-    String lat, lon;
+    double lat, lon;
 
     short connectSuspendCount =0;
 
@@ -50,6 +51,7 @@ public class MapService extends BaseWebService implements GoogleApiClient.Connec
 
     @Override
     public void onCreate() {
+        Log.i(Constants.LOG_TAG,"on create map service");
         super.onCreate();
         buildGoogleApiClient();
     }
@@ -72,13 +74,16 @@ public class MapService extends BaseWebService implements GoogleApiClient.Connec
                 .addOnConnectionFailedListener(this)
                 .addApi(LocationServices.API)
                 .build();
+
+        mGoogleApiClient.connect();
     }
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
+        Log.i(Constants.LOG_TAG,"connect location service");
         mLocationRequest = LocationRequest.create();
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        mLocationRequest.setInterval(100); // Update location every second
+        mLocationRequest.setInterval(1000); // Update location every second
 
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -99,8 +104,9 @@ public class MapService extends BaseWebService implements GoogleApiClient.Connec
                 mGoogleApiClient);
 
         if (mLastLocation != null) {
-            lat = String.valueOf(mLastLocation.getLatitude());
-            lon = String.valueOf(mLastLocation.getLongitude());
+            lat = mLastLocation.getLatitude();
+            lon = mLastLocation.getLongitude();
+
             Log.v(Constants.LOG_TAG,"we got location...");
 
             WebSocket webSocket = WheelyApp.getWebSocket();
@@ -110,13 +116,12 @@ public class MapService extends BaseWebService implements GoogleApiClient.Connec
                     String userName = PreferenceUtils.getUserName(this);
                     String userPass = PreferenceUtils.getUserPass(this);
                     WheelyApp.connectAsync(webSocketAdapter,userName,userPass);
-                }else if(webSocket != null && webSocket.getState() == WebSocketState.OPEN)
+                }else if(webSocket != null && webSocket.isOpen())
                 {
                     Gson gson = new Gson();
                     String s = gson.toJson(new LatLonEntity(lat, lon), LatLonEntity.class);
-                    Log.v(Constants.LOG_TAG,"send location message" + s);
-                    //WheelyApp.setTextMessage(String t);
-                    //startForeground(1, MapsActivity.buildIntent(this));
+                    WheelyApp.setTextMessage(s);
+                    startForeground(1, MapsActivity.buildIntent(this));
                 }else if(webSocket != null  && webSocket.getState() == WebSocketState.CLOSED)
                 {
                     sendError(getString(R.string.error_server_connect));
@@ -151,7 +156,7 @@ public class MapService extends BaseWebService implements GoogleApiClient.Connec
 
     @Override
     public void onLocationChanged(Location location) {
-        Log.v(Constants.LOG_TAG,"send location message");
+        Log.v(Constants.LOG_TAG,"onLocationChanged");
     }
 
     @Override

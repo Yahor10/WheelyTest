@@ -97,6 +97,14 @@ public class LoginActivity extends BaseActivity  {
         }
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(PreferenceUtils.isLogin(this)){
+            startActivity(MapsActivity.buildIntent(this));
+            finish();
+        }
+    }
 
     @Override
     protected void onNewIntent(Intent intent) {
@@ -216,6 +224,7 @@ public class LoginActivity extends BaseActivity  {
             Log.i(Constants.LOG_TAG,"success login,web socket is opened");
             finish();
             startActivity(MapsActivity.buildIntent(this));
+            PreferenceUtils.setLogin(this,true);
         }
     }
 

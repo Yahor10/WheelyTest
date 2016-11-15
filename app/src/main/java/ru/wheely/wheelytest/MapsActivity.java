@@ -46,6 +46,7 @@ public class MapsActivity extends BaseFragmentMapActivity  {
             // start service
             Intent service = new Intent(this, MapService.class);
             service.setAction(MapService.ACTION_ATTEMPT_GET_LOCATION);
+            startService(service);
         }
     }
 

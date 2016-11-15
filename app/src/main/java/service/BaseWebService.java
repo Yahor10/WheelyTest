@@ -157,12 +157,26 @@ public abstract class BaseWebService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if(intent == null){
+            Log.e(Constants.LOG_TAG,"MAP server start with null intent"); // TODO checkk err
+            //  Caused by: java.lang.NullPointerException
+            //at service.BaseWebService.onStartCommand(BaseWebService.java:160)
+            // check websocket state
+            return START_STICKY;
+        }
+
         mAction = intent.getAction();
         boolean foreground = intent.getBooleanExtra(EXTRA_ISFOREGROUND, false);
         boolean hasErr = false;
 
         userName = intent.getStringExtra(EXTRA_NAME);
         userPass = intent.getStringExtra(EXTRA_PASSWORD);
+
+        if(TextUtils.isEmpty(userName))
+        {
+            userName = PreferenceUtils.getUserName(this);
+            userPass = PreferenceUtils.getUserPass(this);
+        }
 
         try {
             WheelyApp.connectAsync(webSocketAdapter,userName, userPass);
@@ -176,26 +190,8 @@ public abstract class BaseWebService extends Service {
             e.printStackTrace();
             hasErr = true;
         }
-
-//         new Thread(new Runnable() {
-//             @Override
-//             public void run() {
-//                 try {
-//                     WheelyApp.connect(webSocketAdapter,"aaa:aaa");
-//                 } catch (IOException e) {
-//                     e.printStackTrace();
-//
-//                 } catch (WebSocketException e) {
-//                     e.printStackTrace();
-//                 } catch (NoSuchAlgorithmException e) {
-//                     e.printStackTrace();
-//                 }
-//             }
-//         }).start(); ;
-
-
         if (hasErr) {
-            sendError("cannot connect to server");
+            sendError(getString(R.string.error_server_connect));
             stopSelf();
             return (START_NOT_STICKY);
         } else{

@@ -32,4 +32,16 @@ public class PreferenceUtils {
         SharedPreferences prefs = mContext.getSharedPreferences(nameSpace, 0);
         return prefs.getString(PreferenceKeys.USER_PASSWORD,"");
     }
+
+    public static void setLogin(Context context, Boolean logged ){
+        SharedPreferences prefs =  context.getSharedPreferences(nameSpace, 0);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putBoolean(PreferenceKeys.LOGIN,logged);
+        editor.commit();
+    }
+
+    public static boolean isLogin(Context mContext){
+        SharedPreferences prefs = mContext.getSharedPreferences(nameSpace, 0);
+        return prefs.getBoolean(PreferenceKeys.LOGIN,false);
+    }
 }

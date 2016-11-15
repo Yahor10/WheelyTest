@@ -7,4 +7,5 @@ public class PreferenceKeys {
 
     public static String USER_NAME = "user_name";
     public static String USER_PASSWORD = "user_psw";
+    public static String LOGIN = "user_login";
 }

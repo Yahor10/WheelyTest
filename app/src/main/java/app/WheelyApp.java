@@ -73,9 +73,10 @@ public class WheelyApp extends Application {
         return webSocket.connect();
     }
 
-    public static Future<WebSocket> connectAsync(WebSocketAdapter adapter,String user,String pass) throws IOException, WebSocketException, NoSuchAlgorithmException {
+    public static void connectAsync(WebSocketAdapter adapter,String user,String pass) throws IOException, WebSocketException, NoSuchAlgorithmException {
         createSocket(adapter,user,pass);
-        return webSocket.connect(es);
+        if(!webSocket.isOpen())
+        webSocket.connect(es);
     }
 
     public static Future<WebSocket> reconnectAsync() throws IOException, WebSocketException
@@ -108,8 +109,12 @@ public class WheelyApp extends Application {
 
 
     public static void setTextMessage(String message){
-        //if(getWebSocket() != null &&)
+        if(webSocket != null && webSocket.isOpen()){
+            Log.i(Constants.LOG_TAG,"send webSocket message" + message);
+            webSocket.sendText(message);
+        }
     }
+
     public  static void checkWebsocketState() throws IOException, WebSocketException {
         WebSocketState state = webSocket.getState();
         switch (state)
