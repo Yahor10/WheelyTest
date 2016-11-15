@@ -17,6 +17,7 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.gson.Gson;
 import com.neovisionaries.ws.client.WebSocket;
 import com.neovisionaries.ws.client.WebSocketException;
 import com.neovisionaries.ws.client.WebSocketState;
@@ -26,8 +27,8 @@ import java.security.NoSuchAlgorithmException;
 
 import app.Constants;
 import app.WheelyApp;
+import data.LatLonEntity;
 import preferences.PreferenceUtils;
-import ru.wheely.wheelytest.MapsActivity;
 import ru.wheely.wheelytest.R;
 
 public class MapService extends BaseWebService implements GoogleApiClient.ConnectionCallbacks,
@@ -43,7 +44,8 @@ public class MapService extends BaseWebService implements GoogleApiClient.Connec
 
     short connectSuspendCount =0;
 
-    public MapService() {
+    public MapService()
+    {
     }
 
     @Override
@@ -110,12 +112,14 @@ public class MapService extends BaseWebService implements GoogleApiClient.Connec
                     WheelyApp.connectAsync(webSocketAdapter,userName,userPass);
                 }else if(webSocket != null && webSocket.getState() == WebSocketState.OPEN)
                 {
-                    Log.v(Constants.LOG_TAG,"send location message");
+                    Gson gson = new Gson();
+                    String s = gson.toJson(new LatLonEntity(lat, lon), LatLonEntity.class);
+                    Log.v(Constants.LOG_TAG,"send location message" + s);
                     //WheelyApp.setTextMessage(String t);
-                    startForeground(1, MapsActivity.buildIntent(this));
+                    //startForeground(1, MapsActivity.buildIntent(this));
                 }else if(webSocket != null  && webSocket.getState() == WebSocketState.CLOSED)
                 {
-                    Toast.makeText(this, R.string.error_server_connect,Toast.LENGTH_SHORT).show();
+                    sendError(getString(R.string.error_server_connect));
                 }
 
             } catch (IOException e) {
@@ -129,8 +133,6 @@ public class MapService extends BaseWebService implements GoogleApiClient.Connec
                 sendError(e.getLocalizedMessage());
             }
         }
-
-
     }
 
     @Override
