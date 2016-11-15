@@ -27,11 +27,16 @@ import ru.wheely.wheelytest.R;
 /**
  * Created by CoolerBy on 14.11.2016.
  */
-public class BaseWebService extends Service {
+public abstract class BaseWebService extends Service {
 
     public static String EXTRA_ISFOREGROUND = "foreground";
     public static String EXTRA_NAME = "login_name";
     public static String EXTRA_PASSWORD = "login_password";
+    public static String EXTRA_WEBSOCKET_STATE = "websocket_state";
+
+    private String mAction;
+
+    protected String userName,userPass;
 
     private final WebSocketAdapter webSocketAdapter = new WebSocketAdapter(){
 
@@ -39,12 +44,13 @@ public class BaseWebService extends Service {
         public void onStateChanged(WebSocket websocket, WebSocketState newState) throws Exception {
             super.onStateChanged(websocket, newState);
             Log.i(Constants.LOG_WEBSOCKET,"on statechanged" + newState.name());
-            switch (newState){
-                case OPEN:
-                    // Save to preff , success start
-                    break;
-            }
             WheelyApp.checkWebsocketState();
+
+            Intent intent = new Intent();
+            intent.setAction(mAction);
+            intent.putExtra(EXTRA_WEBSOCKET_STATE,newState);
+            handleAction(intent);
+
         }
 
         @Override
@@ -52,12 +58,24 @@ public class BaseWebService extends Service {
             super.onDisconnected(websocket, serverCloseFrame, clientCloseFrame, closedByServer);
             Log.e(Constants.LOG_WEBSOCKET,"on onDisconnected");
 
+            String localizedMessage = "Disconnect from server";
+
+            Intent intent = new Intent();
+            intent.setAction(BaseActivity.ACTION_ERROR);
+            intent.putExtra(BaseActivity.EXTRA_ERROR_MESSAGE,localizedMessage);
+            handleAction(intent);
         }
 
         @Override
         public void onConnectError(WebSocket websocket, WebSocketException exception) throws Exception {
             super.onConnectError(websocket, exception);
             Log.e(Constants.LOG_WEBSOCKET,"on onConnectError");
+            String localizedMessage = exception.getLocalizedMessage();
+
+            Intent intent = new Intent();
+            intent.setAction(BaseActivity.ACTION_ERROR);
+            intent.putExtra(BaseActivity.EXTRA_ERROR_MESSAGE,localizedMessage);
+            handleAction(intent);
         }
 
         @Override
@@ -68,7 +86,14 @@ public class BaseWebService extends Service {
 
         @Override
         public void onUnexpectedError(WebSocket websocket, WebSocketException cause) throws Exception {
-            Log.e(Constants.LOG_WEBSOCKET,"on onUnexpectedError");        }
+            Log.e(Constants.LOG_WEBSOCKET,"on onUnexpectedError");
+            String localizedMessage = cause.getLocalizedMessage();
+
+            Intent intent = new Intent();
+            intent.setAction(BaseActivity.ACTION_ERROR);
+            intent.putExtra(BaseActivity.EXTRA_ERROR_MESSAGE,localizedMessage);
+            handleAction(intent);
+        }
 
         @Override
         public void onCloseFrame(WebSocket websocket, WebSocketFrame frame) throws Exception {
@@ -80,8 +105,16 @@ public class BaseWebService extends Service {
         public void onError(WebSocket websocket, WebSocketException cause) throws Exception {
             super.onError(websocket, cause);
             Log.e(Constants.LOG_WEBSOCKET,"on onError");
+            String localizedMessage = cause.getLocalizedMessage();
+
+            Intent intent = new Intent();
+            intent.setAction(BaseActivity.ACTION_ERROR);
+            intent.putExtra(BaseActivity.EXTRA_ERROR_MESSAGE,localizedMessage);
+
+            handleAction(intent);
         }
     };
+
 
     @Nullable
     @Override
@@ -91,11 +124,12 @@ public class BaseWebService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        mAction = intent.getAction();
         boolean foreground = intent.getBooleanExtra(EXTRA_ISFOREGROUND, false);
         boolean hasErr = false;
 
-        String userName = intent.getStringExtra(EXTRA_NAME);
-        String userPass = intent.getStringExtra(EXTRA_PASSWORD);
+        userName = intent.getStringExtra(EXTRA_NAME);
+        userPass = intent.getStringExtra(EXTRA_PASSWORD);
 
         try {
             WheelyApp.connectAsync(webSocketAdapter,userName, userPass);
@@ -161,4 +195,7 @@ public class BaseWebService extends Service {
         startForeground(notificationId,
                 builder.build());
     }
+
+    protected abstract void handleAction(Intent i);
+
 }

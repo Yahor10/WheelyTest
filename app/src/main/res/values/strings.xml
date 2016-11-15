@@ -17,4 +17,6 @@
         completions."
     </string>
     <string name="title_activity_maps">Map</string>
+
+    <string name="error_unexpected">Unexpected error occurs in application</string>
 </resources>

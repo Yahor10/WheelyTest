@@ -41,6 +41,11 @@ public abstract class BaseActivity extends AppCompatActivity {
         if(intent != null && intent.getAction().equals(ACTION_ERROR)){
             handleFail(intent);
         }
+        if(intent.getAction().equals(LoginActivity.ACTION_LOGIN_SUCCESS)){
+            handleSuccess(intent);
+        }else if(intent.getAction().equals(LoginActivity.ACTION_LOGIN_FAILED)){
+            handleFail(intent);
+        }
 
     }
 

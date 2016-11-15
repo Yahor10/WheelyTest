@@ -3,13 +3,14 @@ package ru.wheely.wheelytest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
+import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -19,6 +20,10 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import net.NetworkUtils;
+
+import app.Constants;
+import preferences.PreferenceUtils;
 import service.BaseWebService;
 import service.LoginService;
 
@@ -27,11 +32,12 @@ import service.LoginService;
  */
 public class LoginActivity extends BaseActivity  {
 
-    /**
-     * Id to identity READ_CONTACTS permission request.
-     */
-    private static final int REQUEST_READ_CONTACTS = 0;
+    public static final String ACTION_LOGIN_SUCCESS = "ru.wheely.wheelytest.ACTION_LOGIN_SUCCESS";
+    public static final String ACTION_LOGIN_FAILED  = "ru.wheely.wheelytest.ACTION_LOGIN_FAILED";
 
+    public static Intent buildIntent(Context context){
+        return new Intent(context,LoginActivity.class);
+    }
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
      */
@@ -64,22 +70,34 @@ public class LoginActivity extends BaseActivity  {
             }
         });
 
+        final Context ctx =this;
         Button SignInButton = (Button) findViewById(R.id.sign_in_button);
         SignInButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-                //if(!Netw)
-                mUserView.setText("aaaaaw");
-                mPasswordView.setText("aaadaaw");
-                attemptLogin();
-
-
+                if(!NetworkUtils.isNetworkAvailable(ctx)){
+                    showErrorSnackBar("Network is unavailable");
+                }else{
+                    mUserView.setText("aaaaaw");// TODO remove test data
+                    mPasswordView.setText("aaadaaw");
+                    attemptLogin();
+                }
             }
         });
 
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
+
+        String userName = PreferenceUtils.getUserName(this);
+        String userPass = PreferenceUtils.getUserPass(this);
+
+        if(!TextUtils.isEmpty(userName) && !TextUtils.isEmpty(userPass)) {
+            mUserView.setText(userName);
+            mPasswordView.setText(userPass);
+        }
     }
+
+
 
     /**
      * Callback received when a permissions request has been completed.
@@ -87,11 +105,7 @@ public class LoginActivity extends BaseActivity  {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
-        if (requestCode == REQUEST_READ_CONTACTS) {
-            if (grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-            }
-        }
+//
     }
 
 
@@ -193,15 +207,34 @@ public class LoginActivity extends BaseActivity  {
 
     @Override
     protected void handleSuccess(Intent i) {
-
+        if(i.getAction().equals(ACTION_LOGIN_SUCCESS))
+        {
+            Log.i(Constants.LOG_TAG,"success login,web socket is opened");
+            finish();
+            startActivity(MapsActivity.buildIntent(this));
+        }
     }
 
     @Override
     protected void handleFail(Intent i) {
 
-        if(i.getAction().equals(ACTION_ERROR)){
+        String action = i.getAction();
+        if(action.equals(ACTION_ERROR))
+        {
             String errMessage = i.getStringExtra(EXTRA_ERROR_MESSAGE);
-            i.getIntExtra(EXTRA_ERROR_CODE,-1);
+            if(TextUtils.isEmpty(errMessage))
+            {
+                errMessage = getString(R.string.error_unexpected);
+            }
+
+            showErrorSnackBar(errMessage);
+        }else if(action.equals(ACTION_LOGIN_FAILED))
+        {
+            String errMessage = i.getStringExtra(EXTRA_ERROR_MESSAGE);
+            if(TextUtils.isEmpty(errMessage))
+            {
+                errMessage = "Can not to login.Please verify your credentinals";
+            }
             showErrorSnackBar(errMessage);
         }
     }
@@ -223,16 +256,12 @@ public class LoginActivity extends BaseActivity  {
 
         @Override
         protected Boolean doInBackground(Void... params) {
-            // TODO: attempt authentication against a network service.
-            // check network is available
             try {
-                // Simulate network access.
                 Thread.sleep(2000);
             } catch (InterruptedException e) {
                 return false;
             }
 
-            // TODO: register the new account here.
             return true;
         }
 
@@ -243,12 +272,13 @@ public class LoginActivity extends BaseActivity  {
 
             if (success) {
                 Intent service = new Intent(LoginActivity.this, LoginService.class);
+                service.setAction(LoginService.ACTION_ATTEMPT_LOGIN);
+
                 service.putExtra(BaseWebService.EXTRA_ISFOREGROUND,true);
                 service.putExtra(BaseWebService.EXTRA_NAME,mUser);
                 service.putExtra(BaseWebService.EXTRA_PASSWORD,mPassword);
 
                 startService(service);
-                // save last user into prefs
             } else {
                 mPasswordView.setError(getString(R.string.error_incorrect_password));
                 mPasswordView.requestFocus();
