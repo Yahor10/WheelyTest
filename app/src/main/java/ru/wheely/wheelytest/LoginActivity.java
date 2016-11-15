@@ -3,14 +3,12 @@ package ru.wheely.wheelytest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
+import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.v4.app.LoaderManager;
-import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.View;
@@ -21,23 +19,19 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import service.BaseWebService;
+import service.LoginService;
+
 /**
  * A login screen that offers login via email/password.
  */
-public class LoginActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
+public class LoginActivity extends BaseActivity  {
 
     /**
      * Id to identity READ_CONTACTS permission request.
      */
     private static final int REQUEST_READ_CONTACTS = 0;
 
-    /**
-     * A dummy authentication store containing known user names and passwords.
-     * TODO: remove after connecting to a real authentication system.
-     */
-    private static final String[] DUMMY_CREDENTIALS = new String[]{
-            "foo@example.com:hello", "bar@example.com:world"
-    };
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
      */
@@ -74,49 +68,18 @@ public class LoginActivity extends AppCompatActivity implements LoaderManager.Lo
         SignInButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
+                //if(!Netw)
+                mUserView.setText("aaaaaw");
+                mPasswordView.setText("aaadaaw");
                 attemptLogin();
+
+
             }
         });
 
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
     }
-
-//    private void populateAutoComplete() {
-//        if (!mayRequestContacts()) {
-//            return;
-//        }
-//
-//        if (VERSION.SDK_INT >= 14) {
-//            // Use ContactsContract.Profile (API 14+)
-//            getSupportLoaderManager().initLoader(0, null, this);
-//        } else if (VERSION.SDK_INT >= 8) {
-//            // Use AccountManager (API 8+)
-//            new SetupEmailAutoCompleteTask().execute(null, null);
-//        }
-//    }
-
-//    private boolean mayRequestContacts() {
-//        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-//            return true;
-//        }
-//        if (checkSelfPermission(READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
-//            return true;
-//        }
-//        if (shouldShowRequestPermissionRationale(READ_CONTACTS)) {
-//            Snackbar.make(mEmailView, R.string.permission_rationale, Snackbar.LENGTH_INDEFINITE)
-//                    .setAction(android.R.string.ok, new View.OnClickListener() {
-//                        @Override
-//                        @TargetApi(Build.VERSION_CODES.M)
-//                        public void onClick(View v) {
-//                            requestPermissions(new String[]{READ_CONTACTS}, REQUEST_READ_CONTACTS);
-//                        }
-//                    });
-//        } else {
-//            requestPermissions(new String[]{READ_CONTACTS}, REQUEST_READ_CONTACTS);
-//        }
-//        return false;
-//    }
 
     /**
      * Callback received when a permissions request has been completed.
@@ -228,22 +191,21 @@ public class LoginActivity extends AppCompatActivity implements LoaderManager.Lo
         }
     }
 
-
-
     @Override
-    public android.support.v4.content.Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        return null;
-    }
-
-    @Override
-    public void onLoadFinished(android.support.v4.content.Loader<Cursor> loader, Cursor cursor) {
+    protected void handleSuccess(Intent i) {
 
     }
 
     @Override
-    public void onLoaderReset(android.support.v4.content.Loader<Cursor> loader) {
+    protected void handleFail(Intent i) {
 
+        if(i.getAction().equals(ACTION_ERROR)){
+            String errMessage = i.getStringExtra(EXTRA_ERROR_MESSAGE);
+            i.getIntExtra(EXTRA_ERROR_CODE,-1);
+            showErrorSnackBar(errMessage);
+        }
     }
+
 
     /**
      * Represents an asynchronous login/registration task used to authenticate
@@ -280,7 +242,12 @@ public class LoginActivity extends AppCompatActivity implements LoaderManager.Lo
             showProgress(false);
 
             if (success) {
-                finish();
+                Intent service = new Intent(LoginActivity.this, LoginService.class);
+                service.putExtra(BaseWebService.EXTRA_ISFOREGROUND,true);
+                service.putExtra(BaseWebService.EXTRA_NAME,mUser);
+                service.putExtra(BaseWebService.EXTRA_PASSWORD,mPassword);
+
+                startService(service);
                 // save last user into prefs
             } else {
                 mPasswordView.setError(getString(R.string.error_incorrect_password));
