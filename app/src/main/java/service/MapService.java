@@ -6,10 +6,11 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.Message;
+import android.os.RemoteException;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -25,7 +26,6 @@ import com.neovisionaries.ws.client.WebSocketState;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 
-import app.Constants;
 import app.WheelyApp;
 import data.LatLonEntity;
 import preferences.PreferenceUtils;
@@ -45,6 +45,7 @@ public class MapService extends BaseWebService implements GoogleApiClient.Connec
     double lat, lon;
 
     short connectSuspendCount =0;
+    private Gson gson;
 
     public MapService()
     {
@@ -54,6 +55,7 @@ public class MapService extends BaseWebService implements GoogleApiClient.Connec
     public void onCreate() {
         super.onCreate();
         buildGoogleApiClient();
+        gson = new Gson();
     }
 
     @Override
@@ -65,7 +67,6 @@ public class MapService extends BaseWebService implements GoogleApiClient.Connec
     @Override
     protected void handleAction(Intent i) {
         String action = i.getAction();
-
         Intent intent;
         if(action.equals(BaseActivity.ACTION_ERROR))
         {
@@ -87,11 +88,9 @@ public class MapService extends BaseWebService implements GoogleApiClient.Connec
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        Log.i(Constants.LOG_TAG,"connect location service");
         mLocationRequest = LocationRequest.create();
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         mLocationRequest.setInterval(1000); // Update location every second
-
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
@@ -102,7 +101,6 @@ public class MapService extends BaseWebService implements GoogleApiClient.Connec
             // to handle the case where the user grants the permission. See the documentation
             // for ActivityCompat#requestPermissions for more details.
             Toast.makeText(this,"Application has not permission access",Toast.LENGTH_SHORT).show();
-
             return;
         }
 
@@ -114,8 +112,6 @@ public class MapService extends BaseWebService implements GoogleApiClient.Connec
             lat = mLastLocation.getLatitude();
             lon = mLastLocation.getLongitude();
 
-            Log.v(Constants.LOG_TAG,"we got location...");
-
             WebSocket webSocket = WheelyApp.getWebSocket();
             try {
                 if(webSocket == null)
@@ -125,8 +121,6 @@ public class MapService extends BaseWebService implements GoogleApiClient.Connec
                     WheelyApp.connectAsync(webSocketAdapter,userName,userPass);
                 }else if(webSocket != null && webSocket.isOpen())
                 {
-
-                    Gson gson = new Gson();
                     String s = gson.toJson(new LatLonEntity(lat, lon), LatLonEntity.class);
 
                     WheelyApp.setTextMessage(s);
@@ -165,7 +159,19 @@ public class MapService extends BaseWebService implements GoogleApiClient.Connec
 
     @Override
     public void onLocationChanged(Location location) {
-        Log.v(Constants.LOG_TAG,"onLocationChanged");
+        Message message = Message.obtain();
+        message.arg1 = MapsActivity.MyLocation_Message;
+        LatLonEntity latLonEntity = new LatLonEntity(location.getLatitude(), location.getLongitude());
+        message.obj = latLonEntity;
+        try {
+            if(messageHandler != null)
+                messageHandler.send(message);
+            WheelyApp.setTextMessage(gson.toJson(latLonEntity));
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }catch (NullPointerException e){
+            e.printStackTrace();
+        }
     }
 
     @Override

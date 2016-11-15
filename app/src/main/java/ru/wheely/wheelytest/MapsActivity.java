@@ -18,17 +18,14 @@ import service.MapService;
 
 public class MapsActivity extends BaseFragmentMapActivity  {
 
-    public static final String BROADCAST_MAP_DATA = "BROADCAST_MAP_DATA";
-    public static final String MESSENGER = "MESSENGER";
-    public static final String EXTRA_MARKER_DATA = "EXTRA_MARKER_DATA";
 
+    public static final String MESSENGER = "MESSENGER";
 
 
     // TODO check if activity is alive
 
-
-
     public static String ACTION_START_MAP = "ru.wheely.wheelytest.START_MAP";
+
     private final  int REQUEST_LOCATION_PERMISSION = 111;
     private final int REQUEST_COARSE_PERMISSION = 112;
 
@@ -59,6 +56,15 @@ public class MapsActivity extends BaseFragmentMapActivity  {
         }else {
             startMapService();
         }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        if(messageHandler != null)
+        messageHandler.clearListener();
+        messageHandler = null;
     }
 
     @Override

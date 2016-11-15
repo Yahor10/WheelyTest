@@ -168,7 +168,7 @@ public abstract class BaseWebService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if(intent == null){
-            Log.e(Constants.LOG_TAG,"MAP server start with null intent"); // TODO checkk err
+            Log.e(Constants.LOG_TAG," start with null intent"); // TODO checkk err
             //  Caused by: java.lang.NullPointerException
             //at service.BaseWebService.onStartCommand(BaseWebService.java:160)
             // check websocket state
@@ -177,6 +177,8 @@ public abstract class BaseWebService extends Service {
 
         mAction = intent.getAction();
         boolean hasErr = false;
+
+        Log.v(Constants.LOG_TAG,"service start with action" + mAction );
 
         userName = intent.getStringExtra(EXTRA_NAME);
         userPass = intent.getStringExtra(EXTRA_PASSWORD);
@@ -188,13 +190,13 @@ public abstract class BaseWebService extends Service {
         }
 
         if(mAction.equals(MapService.ACTION_ATTEMPT_GET_LOCATION)) {
-            Log.v(Constants.LOG_TAG,"get location!");
             WebSocket webSocket = WheelyApp.getWebSocket();
             if(webSocket != null)
             webSocket.addListener(webSocketAdapter);
 
             Bundle extras = intent.getExtras();
             messageHandler = (Messenger) extras.get(MapsActivity.MESSENGER);
+            startForeground(1, MapsActivity.buildIntent(this));
         }
 
         try {

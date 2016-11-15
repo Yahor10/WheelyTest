@@ -12,6 +12,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
+import android.util.Log;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -26,6 +27,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
+import app.Constants;
 import data.LatLonEntity;
 
 /**
@@ -33,13 +35,15 @@ import data.LatLonEntity;
  */
 public abstract class BaseFragmentMapActivity extends FragmentActivity
         implements OnMapReadyCallback,UpdateMap {
+    public static final String BROADCAST_ERROR_DATA = "BROADCAST_ERROR_DATA";
+    public static final String EXTRA_ERROR_MESSAGE = "EXTRA_ERROR_MESSAGE";
 
     protected GoogleMap mMap;
-    protected Handler messageHandler = new MessageHandler(this);
+    protected MessageHandler messageHandler = new MessageHandler(this);
 
     @Override
     public void updateMap(LatLng latLng) {
-
+        Log.i(Constants.LOG_TAG,"draw new markers..");
         GoogleMap map = getMap();
         if(map != null){
             map.addMarker(new MarkerOptions().position(latLng).title("Marker"));
@@ -48,6 +52,7 @@ public abstract class BaseFragmentMapActivity extends FragmentActivity
 
     @Override
     public void updateLocation(LatLng latLng) {
+        Log.i(Constants.LOG_TAG,"draw my location...");
         GoogleMap map = getMap();
         if(map != null)
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 12.0f));
@@ -57,16 +62,19 @@ public abstract class BaseFragmentMapActivity extends FragmentActivity
     public static final int MyLocation_Message = 102;
 
     public static class MessageHandler extends Handler {
-        private final UpdateMap updateMap;
+        private UpdateMap updateMap;
 
         public MessageHandler(UpdateMap m) {
             updateMap = m;
         }
 
+        public void clearListener(){
+            updateMap = null;
+        }
+
         @Override
         public void handleMessage(Message message) {
             int state = message.arg1;
-
             switch (state)
             {
                 case Marker_Message:
@@ -75,16 +83,16 @@ public abstract class BaseFragmentMapActivity extends FragmentActivity
                     List<LatLonEntity> list = new Gson().fromJson(markers, listType);
                     if(updateMap != null)
                     {
-                        for (LatLonEntity e :list) {
+                        for (LatLonEntity e :list)
+                        {
                             final LatLng pos = new LatLng(e.getLat(),e.getLon());
                             updateMap.updateMap(pos);
                         }
                     }
                     break;
                 case MyLocation_Message:
-                    String location = (String) message.obj;
-                    LatLonEntity latLonEntity = new Gson().fromJson(location, LatLonEntity.class);
-                    updateMap.updateLocation(new LatLng(latLonEntity.getLat(),latLonEntity.getLon()));
+                    LatLonEntity location = (LatLonEntity) message.obj;
+                    updateMap.updateLocation(new LatLng(location.getLat(),location.getLon()));
                     break;
             }
         }
