@@ -3,7 +3,10 @@ package service;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.os.Bundle;
 import android.os.IBinder;
+import android.os.Message;
+import android.os.Messenger;
 import android.support.annotation.Nullable;
 import android.support.v7.app.NotificationCompat;
 import android.text.TextUtils;
@@ -33,7 +36,6 @@ import ru.wheely.wheelytest.R;
  */
 public abstract class BaseWebService extends Service {
 
-    public static String EXTRA_ISFOREGROUND = "foreground";
     public static String EXTRA_NAME = "login_name";
     public static String EXTRA_PASSWORD = "login_password";
     public static String EXTRA_WEBSOCKET_STATE = "websocket_state";
@@ -41,6 +43,9 @@ public abstract class BaseWebService extends Service {
     private String mAction;
 
     protected String userName,userPass;
+
+    protected Messenger messageHandler;
+
 
     protected final WebSocketAdapter webSocketAdapter = new WebSocketAdapter(){
 
@@ -60,14 +65,19 @@ public abstract class BaseWebService extends Service {
         @Override
         public void onTextFrame(WebSocket websocket, WebSocketFrame frame) throws Exception {
             Log.i(Constants.LOG_WEBSOCKET,"on onTextFrame");
-
             super.onTextFrame(websocket, frame);
         }
 
         @Override
         public void onTextMessage(WebSocket websocket, String text) throws Exception {
             super.onTextMessage(websocket, text);
-            Log.i(Constants.LOG_WEBSOCKET,"on onTextMessage");
+            Log.i(Constants.LOG_WEBSOCKET,"on onTextMessage" + text);
+            if(messageHandler != null){
+                Message message = Message.obtain();
+                message.arg1 = MapsActivity.Marker_Message;
+                message.obj = text;
+                messageHandler.send(message);
+            }
         }
 
         @Override
@@ -88,7 +98,7 @@ public abstract class BaseWebService extends Service {
             WebSocket webSocket = WheelyApp.getWebSocket();
             if(webSocket != null && !TextUtils.isEmpty(userName))
             {
-                Toast.makeText(BaseWebService.this,"Trying to recconect",Toast.LENGTH_SHORT).show();
+                Toast.makeText(BaseWebService.this,"Trying to recconect!",Toast.LENGTH_SHORT).show();
                 WheelyApp.getWebSocket().removeListener(this);
                 WheelyApp.getWebSocket().disconnect();
                 WheelyApp.connectAsync(this,userName,userPass);
@@ -166,7 +176,6 @@ public abstract class BaseWebService extends Service {
         }
 
         mAction = intent.getAction();
-        boolean foreground = intent.getBooleanExtra(EXTRA_ISFOREGROUND, false);
         boolean hasErr = false;
 
         userName = intent.getStringExtra(EXTRA_NAME);
@@ -176,6 +185,11 @@ public abstract class BaseWebService extends Service {
         {
             userName = PreferenceUtils.getUserName(this);
             userPass = PreferenceUtils.getUserPass(this);
+        }
+
+        if(mAction.equals(MapService.ACTION_ATTEMPT_GET_LOCATION)) {
+            Bundle extras = intent.getExtras();
+            messageHandler = (Messenger) extras.get(MapsActivity.MESSENGER);
         }
 
         try {
@@ -195,8 +209,6 @@ public abstract class BaseWebService extends Service {
             stopSelf();
             return (START_NOT_STICKY);
         } else{
-            if(foreground)
-                startForeground(1, MapsActivity.buildIntent(this));
             return (START_STICKY);
         }
     }

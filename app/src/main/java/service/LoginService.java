@@ -1,6 +1,5 @@
 package service;
 
-import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
 import android.util.Log;
@@ -24,16 +23,6 @@ public class LoginService extends BaseWebService
 
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId)
-    {
-        if(intent == null){
-            Log.e(Constants.LOG_TAG,"intent is null");
-        return Service.START_STICKY;
-       }
-        return super.onStartCommand(intent,flags,startId);
-    }
-
-    @Override
     protected void handleAction(Intent i) {
         String action = i.getAction();
         Intent intent;
@@ -53,8 +42,6 @@ public class LoginService extends BaseWebService
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     intent.setAction(LoginActivity.ACTION_LOGIN_SUCCESS);
                     startActivity(intent);
-
-                    stopSelf();
                     break;
                 case CLOSED:
                 {
@@ -72,6 +59,7 @@ public class LoginService extends BaseWebService
             intent.putExtra(BaseActivity.EXTRA_ERROR_MESSAGE,i.getStringExtra(BaseActivity.EXTRA_ERROR_MESSAGE));
             startActivity(intent);
         }
+        stopSelf();
     }
 
     @Override

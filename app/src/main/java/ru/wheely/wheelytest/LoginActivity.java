@@ -283,11 +283,11 @@ public class LoginActivity extends BaseActivity  {
             mAuthTask = null;
             showProgress(false);
 
-            if (success) {
+            if (success)
+            {
                 Intent service = new Intent(LoginActivity.this, LoginService.class);
                 service.setAction(LoginService.ACTION_ATTEMPT_LOGIN);
 
-                service.putExtra(BaseWebService.EXTRA_ISFOREGROUND,false);
                 service.putExtra(BaseWebService.EXTRA_NAME,mUser);
                 service.putExtra(BaseWebService.EXTRA_PASSWORD,mPassword);
 

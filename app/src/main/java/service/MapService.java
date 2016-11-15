@@ -29,6 +29,7 @@ import app.Constants;
 import app.WheelyApp;
 import data.LatLonEntity;
 import preferences.PreferenceUtils;
+import ru.wheely.wheelytest.BaseActivity;
 import ru.wheely.wheelytest.MapsActivity;
 import ru.wheely.wheelytest.R;
 
@@ -51,7 +52,6 @@ public class MapService extends BaseWebService implements GoogleApiClient.Connec
 
     @Override
     public void onCreate() {
-        Log.i(Constants.LOG_TAG,"on create map service");
         super.onCreate();
         buildGoogleApiClient();
     }
@@ -64,7 +64,13 @@ public class MapService extends BaseWebService implements GoogleApiClient.Connec
 
     @Override
     protected void handleAction(Intent i) {
+        String action = i.getAction();
 
+        Intent intent;
+        if(action.equals(BaseActivity.ACTION_ERROR))
+        {
+            // TODO send error to mapactivity
+        }
     }
 
     void buildGoogleApiClient() {

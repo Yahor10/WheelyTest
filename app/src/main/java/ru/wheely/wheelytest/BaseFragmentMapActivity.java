@@ -1,11 +1,14 @@
 package ru.wheely.wheelytest;
 
+import android.Manifest;
 import android.content.DialogInterface;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -22,6 +25,10 @@ public class BaseFragmentMapActivity extends FragmentActivity implements OnMapRe
 
     protected GoogleMap mMap;
 
+
+    public GoogleMap getMap() {
+        return mMap;
+    }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -52,6 +59,11 @@ public class BaseFragmentMapActivity extends FragmentActivity implements OnMapRe
         LatLng sydney = new LatLng(-34, 151);
         mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            mMap.setMyLocationEnabled(true);
+        }
     }
 
     protected void requestPermission(final String permission, String rationale, final int requestCode) {
