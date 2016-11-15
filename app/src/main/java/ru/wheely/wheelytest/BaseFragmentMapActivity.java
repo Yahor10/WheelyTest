@@ -4,6 +4,8 @@ import android.Manifest;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
@@ -17,14 +19,76 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
+
+import data.LatLonEntity;
 
 /**
  * Created by CoolerBy on 14.11.2016.
  */
-public class BaseFragmentMapActivity extends FragmentActivity implements OnMapReadyCallback {
+public abstract class BaseFragmentMapActivity extends FragmentActivity
+        implements OnMapReadyCallback,UpdateMap {
 
     protected GoogleMap mMap;
+    protected Handler messageHandler = new MessageHandler(this);
 
+    @Override
+    public void updateMap(LatLng latLng) {
+
+        GoogleMap map = getMap();
+        if(map != null){
+            map.addMarker(new MarkerOptions().position(latLng).title("Marker"));
+        }
+    }
+
+    @Override
+    public void updateLocation(LatLng latLng) {
+        GoogleMap map = getMap();
+        if(map != null)
+        map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 12.0f));
+    }
+
+    public static final int Marker_Message = 101;
+    public static final int MyLocation_Message = 102;
+
+    public static class MessageHandler extends Handler {
+        private final UpdateMap updateMap;
+
+        public MessageHandler(UpdateMap m) {
+            updateMap = m;
+        }
+
+        @Override
+        public void handleMessage(Message message) {
+            int state = message.arg1;
+
+            switch (state)
+            {
+                case Marker_Message:
+                    String markers = (String) message.obj;
+                    Type listType = new TypeToken<ArrayList<LatLonEntity>>(){}.getType();
+                    List<LatLonEntity> list = new Gson().fromJson(markers, listType);
+                    if(updateMap != null)
+                    {
+                        for (LatLonEntity e :list) {
+                            final LatLng pos = new LatLng(e.getLat(),e.getLon());
+                            updateMap.updateMap(pos);
+                        }
+                    }
+                    break;
+                case MyLocation_Message:
+                    String location = (String) message.obj;
+                    LatLonEntity latLonEntity = new Gson().fromJson(location, LatLonEntity.class);
+                    updateMap.updateLocation(new LatLng(latLonEntity.getLat(),latLonEntity.getLon()));
+                    break;
+            }
+        }
+    }
 
     public GoogleMap getMap() {
         return mMap;
@@ -41,6 +105,10 @@ public class BaseFragmentMapActivity extends FragmentActivity implements OnMapRe
     }
 
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+    }
 
     /**
      * Manipulates the map once available.

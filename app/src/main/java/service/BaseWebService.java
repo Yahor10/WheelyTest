@@ -71,8 +71,8 @@ public abstract class BaseWebService extends Service {
         @Override
         public void onTextMessage(WebSocket websocket, String text) throws Exception {
             super.onTextMessage(websocket, text);
-            Log.i(Constants.LOG_WEBSOCKET,"on onTextMessage" + text);
             if(messageHandler != null){
+                Log.i(Constants.LOG_WEBSOCKET,"on onTextMessage" + text);
                 Message message = Message.obtain();
                 message.arg1 = MapsActivity.Marker_Message;
                 message.obj = text;
@@ -188,6 +188,11 @@ public abstract class BaseWebService extends Service {
         }
 
         if(mAction.equals(MapService.ACTION_ATTEMPT_GET_LOCATION)) {
+            Log.v(Constants.LOG_TAG,"get location!");
+            WebSocket webSocket = WheelyApp.getWebSocket();
+            if(webSocket != null)
+            webSocket.addListener(webSocketAdapter);
+
             Bundle extras = intent.getExtras();
             messageHandler = (Messenger) extras.get(MapsActivity.MESSENGER);
         }

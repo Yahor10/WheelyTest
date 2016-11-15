@@ -7,5 +7,5 @@ public class Constants {
 
     public final static String LOG_TAG = "LOG_TAG_APP";
     public final static String LOG_WEBSOCKET = "LOG_WEBSOCKET";
-
+    public final static String LOG_SERVICE= "LOG_SERVICE";
 }

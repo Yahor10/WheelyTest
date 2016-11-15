@@ -84,6 +84,7 @@ public class MapService extends BaseWebService implements GoogleApiClient.Connec
         mGoogleApiClient.connect();
     }
 
+
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         Log.i(Constants.LOG_TAG,"connect location service");
@@ -124,8 +125,10 @@ public class MapService extends BaseWebService implements GoogleApiClient.Connec
                     WheelyApp.connectAsync(webSocketAdapter,userName,userPass);
                 }else if(webSocket != null && webSocket.isOpen())
                 {
+
                     Gson gson = new Gson();
                     String s = gson.toJson(new LatLonEntity(lat, lon), LatLonEntity.class);
+
                     WheelyApp.setTextMessage(s);
                     startForeground(1, MapsActivity.buildIntent(this));
                 }else if(webSocket != null  && webSocket.getState() == WebSocketState.CLOSED)

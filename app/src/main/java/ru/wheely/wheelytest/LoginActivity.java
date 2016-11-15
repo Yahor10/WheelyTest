@@ -102,7 +102,9 @@ public class LoginActivity extends BaseActivity  {
         super.onResume();
         if(PreferenceUtils.isLogin(this)){
             startActivity(MapsActivity.buildIntent(this));
+            overridePendingTransition( R.anim.sliding_up_new, R.anim.sliding_out_up );
             finish();
+
         }
     }
 
@@ -222,8 +224,9 @@ public class LoginActivity extends BaseActivity  {
         if(i.getAction().equals(ACTION_LOGIN_SUCCESS))
         {
             Log.i(Constants.LOG_TAG,"success login,web socket is opened");
-            finish();
             startActivity(MapsActivity.buildIntent(this));
+            overridePendingTransition( R.anim.sliding_up_new, R.anim.sliding_out_up );
+            finish();
             PreferenceUtils.setLogin(this,true);
         }
     }

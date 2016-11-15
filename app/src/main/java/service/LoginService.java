@@ -4,9 +4,11 @@ import android.content.Intent;
 import android.os.IBinder;
 import android.util.Log;
 
+import com.neovisionaries.ws.client.WebSocket;
 import com.neovisionaries.ws.client.WebSocketState;
 
 import app.Constants;
+import app.WheelyApp;
 import preferences.PreferenceUtils;
 import ru.wheely.wheelytest.BaseActivity;
 import ru.wheely.wheelytest.LoginActivity;
@@ -59,11 +61,20 @@ public class LoginService extends BaseWebService
             intent.putExtra(BaseActivity.EXTRA_ERROR_MESSAGE,i.getStringExtra(BaseActivity.EXTRA_ERROR_MESSAGE));
             startActivity(intent);
         }
-        stopSelf();
     }
 
     @Override
     public IBinder onBind(Intent intent) {
         throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        WebSocket webSocket = WheelyApp.getWebSocket();
+        Log.i(Constants.LOG_SERVICE,"destroy login service");
+        if(webSocket != null) {
+            webSocket.removeListener(webSocketAdapter);
+        }
     }
 }
