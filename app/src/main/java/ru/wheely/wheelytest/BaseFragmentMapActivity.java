@@ -75,6 +75,11 @@ public abstract class BaseFragmentMapActivity extends FragmentActivity
         @Override
         public void handleMessage(Message message) {
             int state = message.arg1;
+            if(updateMap == null){
+                Log.e(Constants.LOG_TAG,"updatte map is null");
+                return;
+            }
+
             switch (state)
             {
                 case Marker_Message:

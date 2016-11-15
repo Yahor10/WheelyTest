@@ -1,14 +1,17 @@
 package ru.wheely.wheelytest;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Messenger;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 
@@ -58,6 +61,24 @@ public class MapsActivity extends BaseFragmentMapActivity  {
         }
     }
 
+    BroadcastReceiver errorreceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // show error
+        }
+    };
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        try {
+            LocalBroadcastManager.getInstance(this).registerReceiver(errorreceiver, new IntentFilter(BROADCAST_ERROR_DATA));
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
     @Override
     protected void onStop() {
         super.onStop();
@@ -65,6 +86,12 @@ public class MapsActivity extends BaseFragmentMapActivity  {
         if(messageHandler != null)
         messageHandler.clearListener();
         messageHandler = null;
+
+        try {
+            LocalBroadcastManager.getInstance(this).unregisterReceiver(errorreceiver);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     @Override

@@ -5,4 +5,8 @@ package data;
  */
 public class BaseEntity {
     protected String _id;
+
+    public String getId() {
+        return _id;
+    }
 }
