@@ -37,13 +37,14 @@ public abstract class BaseActivity extends AppCompatActivity {
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        Log.v(Constants.LOG_TAG,"on new intent");
-        if(intent != null && intent.getAction().equals(ACTION_ERROR)){
+        Log.v(Constants.LOG_TAG,"on new intent invoke");
+        String action = intent.getAction();
+        if(intent != null && action.equals(ACTION_ERROR)){
             handleFail(intent);
         }
-        if(intent.getAction().equals(LoginActivity.ACTION_LOGIN_SUCCESS)){
+        if(action.equals(LoginActivity.ACTION_LOGIN_SUCCESS)){
             handleSuccess(intent);
-        }else if(intent.getAction().equals(LoginActivity.ACTION_LOGIN_FAILED)){
+        }else if(action.equals(LoginActivity.ACTION_LOGIN_FAILED)){
             handleFail(intent);
         }
 

@@ -66,6 +66,7 @@
 
         <activity
             android:name=".MapsActivity"
+            android:theme="@style/AppTheme.NoActionBar"
             android:label="@string/title_activity_maps">
             <intent-filter>
                 <action android:name="ru.wheely.wheelytest.START_MAP" />

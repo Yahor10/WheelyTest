@@ -51,6 +51,7 @@ public class LoginService extends BaseWebService
                     PreferenceUtils.setUserPass(this,userPass);
 
                     intent = LoginActivity.buildIntent(this);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     intent.setAction(LoginActivity.ACTION_LOGIN_SUCCESS);
                     startActivity(intent);
 
@@ -59,6 +60,7 @@ public class LoginService extends BaseWebService
                 {
                     intent = LoginActivity.buildIntent(this);
                     intent.setAction(LoginActivity.ACTION_LOGIN_FAILED);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(intent);
                 }
             }

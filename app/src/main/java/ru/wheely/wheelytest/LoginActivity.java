@@ -98,6 +98,10 @@ public class LoginActivity extends BaseActivity  {
     }
 
 
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+    }
 
     /**
      * Callback received when a permissions request has been completed.

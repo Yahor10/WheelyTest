@@ -2,6 +2,8 @@ package app;
 
 import android.app.Application;
 import android.net.Uri;
+import android.os.Build;
+import android.os.StrictMode;
 import android.util.Log;
 
 import com.neovisionaries.ws.client.WebSocket;
@@ -27,11 +29,35 @@ public class WheelyApp extends Application {
     final static  ExecutorService es = Executors.newSingleThreadExecutor();
 
     private static final int TIMEOUT = 15000;
+    private static final boolean DEVELOPER_MODE = true;
 
     @Override
     public void onCreate()
     {
         super.onCreate();
+        if (DEVELOPER_MODE) {
+            StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
+                    .detectDiskReads()
+                    .detectDiskWrites()
+                    .detectNetwork()   // or .detectAll() for all detectable problems
+                    .penaltyLog()
+                    .build());
+
+            if(Build.VERSION.SDK_INT >11)
+            StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
+                    .detectLeakedSqlLiteObjects()
+                    .detectLeakedClosableObjects()
+                    .penaltyLog()
+                    .penaltyDeath()
+                    .build());
+            else{
+                StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
+                        .detectLeakedSqlLiteObjects()
+                        .penaltyLog()
+                        .penaltyDeath()
+                        .build());
+            }
+        }
     }
 
 
