@@ -35,7 +35,7 @@ public class MapsActivity extends BaseFragmentMapActivity  {
     public static Intent buildIntent(Context context){
         return new Intent(context,MapsActivity.class);
     }
-
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

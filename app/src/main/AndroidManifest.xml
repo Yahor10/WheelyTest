@@ -62,6 +62,7 @@
             android:value="@string/google_maps_key" />
 
         <activity
+            android:configChanges="orientation|screenSize"
             android:name=".MapsActivity"
             android:label="@string/title_activity_maps"
             android:theme="@style/AppTheme.NoActionBar">
@@ -76,6 +77,12 @@
             android:name="service.MapService"
             android:enabled="true"
             android:exported="false"></service>
+
+        <provider
+            android:name="provider.WheelyProvider"
+            android:authorities="ru.wheely.wheelytest"
+            android:readPermission="ru.wheely.wheelytest.READ"
+            android:writePermission="ru.wheely.wheelytest.WRITE" />
     </application>
 
 </manifest>

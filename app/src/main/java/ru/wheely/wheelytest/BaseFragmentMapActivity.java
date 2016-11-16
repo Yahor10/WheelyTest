@@ -1,8 +1,12 @@
 package ru.wheely.wheelytest;
 
 import android.Manifest;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -29,6 +33,8 @@ import java.util.List;
 
 import app.Constants;
 import data.LatLonEntity;
+import provider.LocationModel;
+import provider.WheelyProvider;
 
 /**
  * Created by CoolerBy on 14.11.2016.
@@ -41,12 +47,19 @@ public abstract class BaseFragmentMapActivity extends FragmentActivity
     protected GoogleMap mMap;
     protected MessageHandler messageHandler = new MessageHandler(this);
 
+    private boolean isMapChanged = false;
     @Override
     public void updateMap(LatLng latLng) {
         Log.i(Constants.LOG_TAG,"draw new markers..");
         GoogleMap map = getMap();
+        ContentResolver contentResolver = getContentResolver();
         if(map != null){
             map.addMarker(new MarkerOptions().position(latLng).title("Marker"));
+
+            ContentValues contentValues = new ContentValues();
+            contentValues.put(LocationModel.LAT, latLng.latitude);
+            contentValues.put(LocationModel.LON, latLng.longitude);
+            contentResolver.insert(WheelyProvider.WHEELY_CONTENT_URI_LOCATION, contentValues);
         }
     }
 
@@ -115,12 +128,17 @@ public abstract class BaseFragmentMapActivity extends FragmentActivity
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+
     }
 
 
+
     @Override
-    protected void onStop() {
-        super.onStop();
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        isMapChanged = true;
+        Log.v(Constants.LOG_TAG,"on config changed!");
     }
 
     /**
@@ -144,6 +162,21 @@ public abstract class BaseFragmentMapActivity extends FragmentActivity
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
             mMap.setMyLocationEnabled(true);
+        }
+
+        if(isMapChanged)
+        {
+            Log.i(Constants.LOG_TAG,"Redraw markers after config change");
+            isMapChanged = false;
+            Cursor cursor = getContentResolver().query(WheelyProvider.WHEELY_CONTENT_URI_LOCATION,
+                    WheelyProvider.projection.get(LocationModel.class), null, null, null);
+            if (cursor.moveToFirst()){
+                do{
+                    LocationModel locationModel = new LocationModel(cursor);
+                    mMap.addMarker(new MarkerOptions().position(new LatLng(locationModel.getLat(),locationModel.getLon())).title("Marker"));
+                }while(cursor.moveToNext());
+            }
+            cursor.close();
         }
     }
 

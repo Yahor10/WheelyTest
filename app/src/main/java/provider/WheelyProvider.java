@@ -43,7 +43,7 @@ public class WheelyProvider extends ContentProvider {
     public static final Uri WHEELY_CONTENT_URI = Uri.parse("content://"
             + AUTHORITY );
 
-    public static final Uri AISPARK_CONTENT_URI_AUTH =
+    public static final Uri WHEELY_CONTENT_URI_LOCATION =
             Uri.withAppendedPath(WHEELY_CONTENT_URI,MARKER_TABLE);
 
 
@@ -143,6 +143,10 @@ public class WheelyProvider extends ContentProvider {
         long rowID = 0;
         switch (match)
         {
+            case URI_MARKER:
+                rowID = db.insertOrThrow(MARKER_TABLE, null, values);
+                resultUri = WHEELY_CONTENT_URI;
+                break;
             case URI_MARKER_ID:
                 rowID = db.insertOrThrow(MARKER_TABLE, null, values);
                 resultUri = ContentUris.withAppendedId(WHEELY_CONTENT_URI, rowID);
@@ -154,7 +158,7 @@ public class WheelyProvider extends ContentProvider {
         // уведомляем ContentResolver, что данные по адресу resultUri изменились
 
 
-        getContext().getContentResolver().notifyChange(resultUri, null);
+        //getContext().getContentResolver().notifyChange(resultUri, null);
         return resultUri;
     }
 
