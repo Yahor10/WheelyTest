@@ -32,6 +32,10 @@ public class LoginService extends BaseWebService
         {
             WebSocketState serializableExtra = (WebSocketState) i.getSerializableExtra(EXTRA_WEBSOCKET_STATE);
 
+            if(serializableExtra == null){
+                return;
+            }
+
             switch (serializableExtra)
             {
                 case OPEN:

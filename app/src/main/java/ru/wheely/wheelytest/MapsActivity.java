@@ -14,8 +14,15 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.View;
+import android.widget.Toast;
+
+import com.neovisionaries.ws.client.WebSocket;
 
 import app.Constants;
+import app.WheelyApp;
+import preferences.PreferenceUtils;
+import provider.WheelyProvider;
 import service.LoginService;
 import service.MapService;
 
@@ -24,8 +31,7 @@ public class MapsActivity extends BaseFragmentMapActivity  {
 
     public static final String MESSENGER = "MESSENGER";
 
-
-    // TODO check if activity is alive
+    private boolean isDBsaved = false;
 
     public static String ACTION_START_MAP = "ru.wheely.wheelytest.START_MAP";
 
@@ -35,7 +41,7 @@ public class MapsActivity extends BaseFragmentMapActivity  {
     public static Intent buildIntent(Context context){
         return new Intent(context,MapsActivity.class);
     }
-    
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,10 +67,25 @@ public class MapsActivity extends BaseFragmentMapActivity  {
         }
     }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        Log.i(Constants.LOG_TAG,"On save instance");
+        isDBsaved = false;
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        isDBsaved = true;
+    }
+
     BroadcastReceiver errorreceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             // show error
+            String errMessage = intent.getStringExtra(BaseActivity.EXTRA_ERROR_MESSAGE);
+            showErrorSnackBar(errMessage);
         }
     };
 
@@ -79,16 +100,29 @@ public class MapsActivity extends BaseFragmentMapActivity  {
         }
     }
 
+    public void onDisconnect(View w){
+
+        WebSocket webSocket = WheelyApp.getWebSocket();
+        if(webSocket != null && webSocket.isOpen()) {
+            webSocket.disconnect();
+            Toast.makeText(this,"You have been disconnect from server",Toast.LENGTH_SHORT).show();
+            PreferenceUtils.setLogin(this,false);
+            finish();
+        }
+    }
+
     @Override
     protected void onStop() {
         super.onStop();
-
         if(messageHandler != null)
         messageHandler.clearListener();
         messageHandler = null;
 
         try {
             LocalBroadcastManager.getInstance(this).unregisterReceiver(errorreceiver);
+            if(isDBsaved) {
+               getContentResolver().delete(WheelyProvider.WHEELY_CONTENT_URI_LOCATION, null, null);
+            }
         }catch (Exception e){
             e.printStackTrace();
         }

@@ -32,5 +32,17 @@
         android:layout_height="match_parent"
         tools:context="ru.wheely.wheelytest.MapsActivity" />
 
+    <Button
+        android:background="@android:drawable/btn_default"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:layout_marginBottom="10dp"
+        android:text="Disconnect"
+        android:onClick="onDisconnect"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true" />
+
 </RelativeLayout>
 

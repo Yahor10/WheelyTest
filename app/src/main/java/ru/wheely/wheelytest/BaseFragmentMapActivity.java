@@ -7,16 +7,21 @@ import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
+import android.view.Gravity;
+import android.widget.FrameLayout;
+import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -33,6 +38,7 @@ import java.util.List;
 
 import app.Constants;
 import data.LatLonEntity;
+import preferences.PreferenceUtils;
 import provider.LocationModel;
 import provider.WheelyProvider;
 
@@ -42,18 +48,17 @@ import provider.WheelyProvider;
 public abstract class BaseFragmentMapActivity extends FragmentActivity
         implements OnMapReadyCallback,UpdateMap {
     public static final String BROADCAST_ERROR_DATA = "BROADCAST_ERROR_DATA";
-    public static final String EXTRA_ERROR_MESSAGE = "EXTRA_ERROR_MESSAGE";
 
     protected GoogleMap mMap;
     protected MessageHandler messageHandler = new MessageHandler(this);
 
-    private boolean isMapChanged = false;
+    private boolean isResumed = false;
     @Override
     public void updateMap(LatLng latLng) {
         Log.i(Constants.LOG_TAG,"draw new markers..");
         GoogleMap map = getMap();
         ContentResolver contentResolver = getContentResolver();
-        if(map != null){
+        if(map != null  && isResumed){
             map.addMarker(new MarkerOptions().position(latLng).title("Marker"));
 
             ContentValues contentValues = new ContentValues();
@@ -64,9 +69,30 @@ public abstract class BaseFragmentMapActivity extends FragmentActivity
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        isResumed = true;
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        Log.v(Constants.LOG_TAG,"On restart");
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+    }
+
+    @Override
     public void updateLocation(LatLng latLng) {
         Log.i(Constants.LOG_TAG,"draw my location...");
         GoogleMap map = getMap();
+
+        PreferenceUtils.setCurrentLat(this,latLng.latitude);
+        PreferenceUtils.setCurrentLon(this,latLng.longitude);
+
         if(map != null)
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 12.0f));
     }
@@ -120,6 +146,7 @@ public abstract class BaseFragmentMapActivity extends FragmentActivity
         return mMap;
     }
 
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -129,7 +156,6 @@ public abstract class BaseFragmentMapActivity extends FragmentActivity
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
-
     }
 
 
@@ -137,7 +163,6 @@ public abstract class BaseFragmentMapActivity extends FragmentActivity
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        isMapChanged = true;
         Log.v(Constants.LOG_TAG,"on config changed!");
     }
 
@@ -155,19 +180,21 @@ public abstract class BaseFragmentMapActivity extends FragmentActivity
         mMap = googleMap;
 
         // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        double currentLat = PreferenceUtils.getCurrentLat(this);
+        double currentLon = PreferenceUtils.getCurrentLon(this);
+
+        LatLng me = new LatLng(currentLat,currentLon);
+        mMap.addMarker(new MarkerOptions().position(me).title("Its Me"));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(me));
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
             mMap.setMyLocationEnabled(true);
         }
 
-        if(isMapChanged)
+        //if(isMapChanged)
         {
             Log.i(Constants.LOG_TAG,"Redraw markers after config change");
-            isMapChanged = false;
             Cursor cursor = getContentResolver().query(WheelyProvider.WHEELY_CONTENT_URI_LOCATION,
                     WheelyProvider.projection.get(LocationModel.class), null, null, null);
             if (cursor.moveToFirst()){
@@ -207,5 +234,22 @@ public abstract class BaseFragmentMapActivity extends FragmentActivity
         builder.setPositiveButton(positiveText, onPositiveButtonClickListener);
         builder.setNegativeButton(negativeText, onNegativeButtonClickListener);
         builder.show();
+    }
+
+    public void showErrorSnackBar(String text){
+        Snackbar snackbar = Snackbar.make(findViewById(android.R.id.content), text, Snackbar.LENGTH_LONG);
+// Get the Snackbar's layout view
+        Snackbar.SnackbarLayout layout = (Snackbar.SnackbarLayout) snackbar.getView();
+        layout.setBackgroundColor(Color.WHITE);//change Snackbar's background color;
+
+        FrameLayout.LayoutParams params =(FrameLayout.LayoutParams)layout.getLayoutParams();
+        params.gravity = Gravity.TOP;
+        layout.setLayoutParams(params);
+// Hide the text
+        TextView textView = (TextView) layout.findViewById(android.support.design.R.id.snackbar_text);
+        textView.setTextColor(ContextCompat.getColor(this,android.R.color.holo_blue_light));
+// Show the Snackbar
+        snackbar.setText(text);
+        snackbar.show();
     }
 }

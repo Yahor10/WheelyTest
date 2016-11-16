@@ -7,10 +7,13 @@ import android.location.Location;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Message;
+import android.os.Messenger;
 import android.os.RemoteException;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.LocalBroadcastManager;
+import android.text.TextUtils;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -70,7 +73,23 @@ public class MapService extends BaseWebService implements GoogleApiClient.Connec
         Intent intent;
         if(action.equals(BaseActivity.ACTION_ERROR))
         {
-            // TODO send error to mapactivity
+            String errMessage = i.getStringExtra(BaseActivity.EXTRA_ERROR_MESSAGE);
+            if(TextUtils.isEmpty(errMessage)){
+                errMessage = getString(R.string.error_unexpected);
+            }
+
+            Intent intenterr = new Intent(MapsActivity.BROADCAST_ERROR_DATA);
+            intenterr.putExtra(BaseActivity.EXTRA_ERROR_MESSAGE,errMessage);
+            LocalBroadcastManager.getInstance(this).sendBroadcast(intenterr);
+
+        }else if(mAction.equals(MapService.ACTION_ATTEMPT_GET_LOCATION)) {
+            WebSocket webSocket = WheelyApp.getWebSocket();
+            if(webSocket != null)
+                webSocket.addListener(webSocketAdapter);
+
+            Bundle extras = i.getExtras();
+            messageHandler = (Messenger) extras.get(MapsActivity.MESSENGER);
+            startForeground(1, MapsActivity.buildIntent(this));
         }
     }
 

@@ -3,11 +3,11 @@ package service;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
-import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.support.annotation.Nullable;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.NotificationCompat;
 import android.text.TextUtils;
 import android.util.Log;
@@ -40,7 +40,7 @@ public abstract class BaseWebService extends Service {
     public static String EXTRA_PASSWORD = "login_password";
     public static String EXTRA_WEBSOCKET_STATE = "websocket_state";
 
-    private String mAction;
+    protected String mAction;
 
     protected String userName,userPass;
 
@@ -178,7 +178,7 @@ public abstract class BaseWebService extends Service {
         mAction = intent.getAction();
         boolean hasErr = false;
 
-        Log.v(Constants.LOG_TAG,"service start with action" + mAction );
+        Log.i(Constants.LOG_TAG,"service start with action" + mAction );
 
         userName = intent.getStringExtra(EXTRA_NAME);
         userPass = intent.getStringExtra(EXTRA_PASSWORD);
@@ -189,15 +189,7 @@ public abstract class BaseWebService extends Service {
             userPass = PreferenceUtils.getUserPass(this);
         }
 
-        if(mAction.equals(MapService.ACTION_ATTEMPT_GET_LOCATION)) {
-            WebSocket webSocket = WheelyApp.getWebSocket();
-            if(webSocket != null)
-            webSocket.addListener(webSocketAdapter);
-
-            Bundle extras = intent.getExtras();
-            messageHandler = (Messenger) extras.get(MapsActivity.MESSENGER);
-            startForeground(1, MapsActivity.buildIntent(this));
-        }
+        handleAction(intent);
 
         try {
             WheelyApp.connectAsync(webSocketAdapter,userName, userPass);
@@ -241,12 +233,19 @@ public abstract class BaseWebService extends Service {
     protected abstract void handleAction(Intent i);
 
     protected void sendError(String message){
-        // TODO check activities
-        Intent i = new Intent();
-        i.setAction(BaseActivity.ACTION_ERROR);
-        i.putExtra(BaseActivity.EXTRA_ERROR_MESSAGE, message);
-        i.putExtra(BaseActivity.EXTRA_ERROR_CODE, 1);
-        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(i);
+        if(mAction.equals(LoginService.ACTION_ATTEMPT_LOGIN)) {
+            Intent i = new Intent();
+            i.setAction(BaseActivity.ACTION_ERROR);
+            i.putExtra(BaseActivity.EXTRA_ERROR_MESSAGE, message);
+            i.putExtra(BaseActivity.EXTRA_ERROR_CODE, 1);
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(i);
+        }else if(mAction.equals(MapService.ACTION_ATTEMPT_GET_LOCATION)){
+            Intent intent = new Intent(MapsActivity.BROADCAST_ERROR_DATA);
+            intent.putExtra(BaseActivity.EXTRA_ERROR_MESSAGE,message);
+            LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+        }else {
+            Toast.makeText(getApplicationContext(),message,Toast.LENGTH_SHORT).show();
+        }
     }
 }

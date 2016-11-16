@@ -44,4 +44,30 @@ public class PreferenceUtils {
         SharedPreferences prefs = mContext.getSharedPreferences(nameSpace, 0);
         return prefs.getBoolean(PreferenceKeys.LOGIN,false);
     }
+
+    public static void setCurrentLat(Context context, double lat ){
+        SharedPreferences prefs =  context.getSharedPreferences(nameSpace, 0);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putLong(PreferenceKeys.CURRENT_LAT, Double.doubleToLongBits(lat));
+        editor.commit();
+    }
+
+    public static double getCurrentLat(Context mContext){
+        SharedPreferences prefs = mContext.getSharedPreferences(nameSpace, 0);
+        double latitude = Double.longBitsToDouble(prefs.getLong(PreferenceKeys.CURRENT_LAT, -31));
+        return latitude;
+    }
+
+    public static void setCurrentLon(Context context, double lon ){
+        SharedPreferences prefs =  context.getSharedPreferences(nameSpace, 0);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putLong(PreferenceKeys.CURRENT_LON, Double.doubleToLongBits(lon));
+        editor.commit();
+    }
+
+    public static double getCurrentLon(Context mContext){
+        SharedPreferences prefs = mContext.getSharedPreferences(nameSpace, 0);
+        double lon = Double.longBitsToDouble(prefs.getLong(PreferenceKeys.CURRENT_LON, 151));
+        return lon;
+    }
 }
