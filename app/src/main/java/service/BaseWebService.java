@@ -192,6 +192,7 @@ public abstract class BaseWebService extends Service {
         handleAction(intent);
 
         try {
+            Log.v(Constants.LOG_TAG,"try to connect");
             WheelyApp.connectAsync(webSocketAdapter,userName, userPass);
         } catch (IOException e) {
             hasErr = true;

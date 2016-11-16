@@ -57,6 +57,7 @@ public class LoginActivity extends BaseActivity  {
         setContentView(R.layout.activity_login);
         // Set up the login form.
         mUserView = (AutoCompleteTextView) findViewById(R.id.user);
+        setTitle("Login");
 
         mPasswordView = (EditText) findViewById(R.id.password);
         mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -95,11 +96,7 @@ public class LoginActivity extends BaseActivity  {
             mUserView.setText(userName);
             mPasswordView.setText(userPass);
         }
-    }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
         if(PreferenceUtils.isLogin(this)){
             startActivity(MapsActivity.buildIntent(this));
             overridePendingTransition( R.anim.sliding_up_new, R.anim.sliding_out_up );
@@ -107,6 +104,7 @@ public class LoginActivity extends BaseActivity  {
 
         }
     }
+
 
     @Override
     protected void onNewIntent(Intent intent) {

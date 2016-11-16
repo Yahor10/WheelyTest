@@ -98,7 +98,7 @@ public class WheelyApp extends Application {
                 .appendQueryParameter("password", pass);
         String myUrl = builder.build().toString();
 
-        if(webSocket == null) {
+        if(webSocket == null || webSocket.getState() == WebSocketState.CLOSED) {
             Log.i(Constants.LOG_WEBSOCKET,"create new socket...");
             webSocket = new WebSocketFactory()
                     .setConnectionTimeout(TIMEOUT)
