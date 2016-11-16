@@ -78,8 +78,8 @@ public class LoginActivity extends BaseActivity  {
                 if(!NetworkUtils.isNetworkAvailable(ctx)){
                     showErrorSnackBar("Network is unavailable");
                 }else{
-                    mUserView.setText("aaaaaw");// TODO remove test data
-                    mPasswordView.setText("aaadaaw");
+                    //mUserView.setText("aaaaaw");// TODO remove test data
+                    //mPasswordView.setText("aaadaaw");
                     attemptLogin();
                 }
             }
