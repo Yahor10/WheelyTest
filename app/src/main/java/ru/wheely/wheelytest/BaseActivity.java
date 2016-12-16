@@ -35,7 +35,7 @@ public abstract class BaseActivity extends AppCompatActivity {
         Log.v(Constants.LOG_TAG,"on create intent");
     }
 
-      
+
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
